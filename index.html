@@ -9,7 +9,9 @@
   </style>
 </head>
 <body>
+  <!-- Use type="module" for ES Module imports -->
   <script type="module">
+    // Import Three.js and GLTFLoader locally
     import * as THREE from './three.module.js';
     import { GLTFLoader } from './GLTFLoader.js';
 
@@ -37,18 +39,18 @@
       renderer.setSize(window.innerWidth, window.innerHeight);
       document.body.appendChild(renderer.domElement);
 
-      // Load GLB
+      // Load GLB model
       const loader = new GLTFLoader();
       loader.load(
-        './CRR.glb',
-        function(gltf) {
+        './CRR.glb', // local 3D model
+        (gltf) => {
           model = gltf.scene;
           model.position.set(0, 0, 0);
           model.scale.set(1, 1, 1);
           scene.add(model);
         },
         undefined,
-        function(error) { console.error(error); }
+        (error) => { console.error('Error loading GLB:', error); }
       );
 
       // Mouse movement
@@ -60,6 +62,7 @@
       const mouseX = (event.clientX / window.innerWidth) * 2 - 1;
       const mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
 
+      // Map mouse to rotation with limits
       targetRotationY = THREE.MathUtils.clamp(mouseX * rotationLimit, -rotationLimit, rotationLimit);
       targetRotationX = THREE.MathUtils.clamp(mouseY * rotationLimit, -rotationLimit, rotationLimit);
     }
