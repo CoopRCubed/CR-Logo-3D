@@ -22,9 +22,9 @@
     0.1,
     1000
   );
-  camera.position.z = 10; // Adjusted so model is visible
+  camera.position.z = 10;
 
-  // Renderer with transparent background
+  // Renderer
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
@@ -43,7 +43,7 @@
     'https://CoopRCubed.github.io/CR-Logo-3D/CPR.glb', // GitHub Pages URL
     function(gltf){
       model = gltf.scene;
-      model.scale.set(2, 2, 2); // Adjust scale if needed
+      model.scale.set(2, 2, 2);
       scene.add(model);
     },
     undefined,
@@ -52,7 +52,7 @@
     }
   );
 
-  // Track mouse
+  // Mouse tracking
   const mouse = new THREE.Vector2();
   window.addEventListener('mousemove', (event) => {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
