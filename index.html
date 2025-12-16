@@ -43,7 +43,7 @@
     'https://CoopRCubed.github.io/CR-Logo-3D/CPR.glb', // GitHub Pages URL
     function(gltf){
       model = gltf.scene;
-      model.scale.set(2, 2, 2);
+      model.scale.set(2, 2, 2); // Adjust if needed
       scene.add(model);
     },
     undefined,
@@ -52,7 +52,7 @@
     }
   );
 
-  // Mouse tracking
+  // Track mouse
   const mouse = new THREE.Vector2();
   window.addEventListener('mousemove', (event) => {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
