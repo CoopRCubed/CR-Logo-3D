@@ -2,91 +2,98 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>CRR 3D Model</title>
+  <title>CRR GLB Viewer with Fallback</title>
   <style>
-    body { margin: 0; overflow: hidden; }
+    body { margin: 0; overflow: hidden; background: transparent; }
     canvas { display: block; }
   </style>
 </head>
 <body>
-  <!-- Use type="module" for ES Module imports -->
-  <script type="module">
-    // Import Three.js and GLTFLoader locally
-    import * as THREE from './three.module.js';
-    import { GLTFLoader } from './GLTFLoader.js';
 
-    let scene, camera, renderer, model;
-    let targetRotationX = 0, targetRotationY = 0;
-    let currentRotationX = 0, currentRotationY = 0;
-    const rotationLimit = Math.PI / 4; // ±45 degrees
+<script type="module">
+  import * as THREE from './three.module.js';
+  import { GLTFLoader } from './GLTFLoader.js';
 
-    init();
-    animate();
+  // ===== Scene setup =====
+  const scene = new THREE.Scene();
 
-    function init() {
-      scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+  );
+  camera.position.z = 3;
 
-      // Camera
-      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-      camera.position.set(0, 0, 5);
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
 
-      // Light
-      const ambientLight = new THREE.AmbientLight(0xffffff, 1);
-      scene.add(ambientLight);
+  // ===== Lighting =====
+  const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+  scene.add(ambient);
 
-      // Renderer
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      document.body.appendChild(renderer.domElement);
+  const directional = new THREE.DirectionalLight(0xffffff, 1);
+  directional.position.set(5, 5, 5);
+  scene.add(directional);
 
-      // Load GLB model
-      const loader = new GLTFLoader();
-      loader.load(
-        './CRR.glb', // local 3D model
-        (gltf) => {
-          model = gltf.scene;
-          model.position.set(0, 0, 0);
-          model.scale.set(1, 1, 1);
-          scene.add(model);
-        },
-        undefined,
-        (error) => { console.error('Error loading GLB:', error); }
-      );
+  // ===== Mouse rotation =====
+  let targetX = 0, targetY = 0;
+  const MAX_ROTATION = 0.6;
+  const EASE = 0.08;
 
-      // Mouse movement
-      document.addEventListener('mousemove', onDocumentMouseMove, false);
-      window.addEventListener('resize', onWindowResize, false);
+  window.addEventListener('mousemove', (event) => {
+    const normalizedX = (event.clientX / window.innerWidth) * 2 - 1;
+    const normalizedY = (event.clientY / window.innerHeight) * 2 - 1;
+
+    targetY = THREE.MathUtils.clamp(normalizedX * MAX_ROTATION, -MAX_ROTATION, MAX_ROTATION);
+    targetX = THREE.MathUtils.clamp(normalizedY * MAX_ROTATION, -MAX_ROTATION, MAX_ROTATION);
+  });
+
+  // ===== Fallback cube =====
+  const fallbackGeometry = new THREE.BoxGeometry(1,1,1);
+  const fallbackMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+  let model = new THREE.Mesh(fallbackGeometry, fallbackMaterial);
+  scene.add(model);
+
+  // ===== Load GLB =====
+  const loader = new GLTFLoader();
+  loader.load(
+    './CRR.glb',
+    function(gltf) {
+      // Remove fallback cube
+      scene.remove(model);
+      model = gltf.scene;
+      model.scale.set(1,1,1);
+      model.position.set(0,0,0);
+      scene.add(model);
+    },
+    undefined,
+    function(error) {
+      console.warn('GLB failed to load, using fallback cube:', error);
     }
+  );
 
-    function onDocumentMouseMove(event) {
-      const mouseX = (event.clientX / window.innerWidth) * 2 - 1;
-      const mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
-
-      // Map mouse to rotation with limits
-      targetRotationY = THREE.MathUtils.clamp(mouseX * rotationLimit, -rotationLimit, rotationLimit);
-      targetRotationX = THREE.MathUtils.clamp(mouseY * rotationLimit, -rotationLimit, rotationLimit);
+  // ===== Animation loop =====
+  function animate() {
+    requestAnimationFrame(animate);
+    if(model) {
+      model.rotation.x += (targetX - model.rotation.x) * EASE;
+      model.rotation.y += (targetY - model.rotation.y) * EASE;
     }
+    renderer.render(scene, camera);
+  }
 
-    function onWindowResize() {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    }
+  animate();
 
-    function animate() {
-      requestAnimationFrame(animate);
+  // ===== Window resize =====
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
 
-      if (model) {
-        // Ease rotation
-        currentRotationX += (targetRotationX - currentRotationX) * 0.05;
-        currentRotationY += (targetRotationY - currentRotationY) * 0.05;
+</script>
 
-        model.rotation.x = currentRotationX;
-        model.rotation.y = currentRotationY;
-      }
-
-      renderer.render(scene, camera);
-    }
-  </script>
 </body>
 </html>
