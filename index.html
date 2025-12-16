@@ -5,93 +5,85 @@
   <title>CRR 3D Model</title>
   <style>
     body { margin: 0; overflow: hidden; }
-    canvas { display: block; width: 100%; height: 100%; }
+    canvas { display: block; }
   </style>
-  <!-- Three.js core -->
-  <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r149/build/three.min.js"></script>
-  <!-- GLTFLoader -->
-  <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r149/examples/js/loaders/GLTFLoader.js"></script>
 </head>
 <body>
-<script>
-window.addEventListener('DOMContentLoaded', () => {
+  <script type="module">
+    import * as THREE from './three.module.js';
+    import { GLTFLoader } from './GLTFLoader.js';
 
-  // Scene
-  const scene = new THREE.Scene();
+    let scene, camera, renderer, model;
+    let targetRotationX = 0, targetRotationY = 0;
+    let currentRotationX = 0, currentRotationY = 0;
+    const rotationLimit = Math.PI / 4; // ±45 degrees
 
-  // Camera
-  const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-  camera.position.z = 15;
+    init();
+    animate();
 
-  // Renderer
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
+    function init() {
+      scene = new THREE.Scene();
 
-  // Lighting
-  const ambient = new THREE.AmbientLight(0xffffff, 1);
-  scene.add(ambient);
+      // Camera
+      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 0, 5);
 
-  // Load CRR GLB
-  const loader = new THREE.GLTFLoader();
-  let model;
-  loader.load(
-    'https://raw.githubusercontent.com/CoopRCubed/CR-Logo-3D/main/CRR.glb', // CRR.glb GitHub raw link
-    function(gltf) {
-      model = gltf.scene;
-      model.position.set(0, 0, 0);
-      model.scale.set(5, 5, 5); // adjust scale if needed
-      scene.add(model);
-    },
-    undefined,
-    function(error) {
-      console.error('Error loading GLB:', error);
-    }
-  );
+      // Light
+      const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+      scene.add(ambientLight);
 
-  // Mouse tracking
-  const mouse = { x: 0, y: 0 };
-  window.addEventListener('mousemove', (event) => {
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-  });
+      // Renderer
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
 
-  // Rotation limits & easing
-  const targetRotation = { x:0, y:0, z:0 };
-  const rotationEase = 0.05;
-  const maxRotation = { x: Math.PI/4, y: Math.PI/4, z: Math.PI/6 };
-  const barrierX = 0.8;
+      // Load GLB
+      const loader = new GLTFLoader();
+      loader.load(
+        './CRR.glb',
+        function(gltf) {
+          model = gltf.scene;
+          model.position.set(0, 0, 0);
+          model.scale.set(1, 1, 1);
+          scene.add(model);
+        },
+        undefined,
+        function(error) { console.error(error); }
+      );
 
-  function animate() {
-    requestAnimationFrame(animate);
-
-    if(model) {
-      // Clamp mouse input
-      let effectiveMouseX = Math.min(Math.max(mouse.x, -barrierX), barrierX);
-      let effectiveMouseY = Math.min(Math.max(mouse.y, -1), 1);
-
-      targetRotation.y = Math.min(Math.max(effectiveMouseX * maxRotation.y, -maxRotation.y), maxRotation.y);
-      targetRotation.x = Math.min(Math.max(-effectiveMouseY * maxRotation.x, -maxRotation.x), maxRotation.x);
-      targetRotation.z = Math.min(Math.max(effectiveMouseX * maxRotation.z, -maxRotation.z), maxRotation.z);
-
-      // Easing rotation
-      model.rotation.x += (targetRotation.x - model.rotation.x) * rotationEase;
-      model.rotation.y += (targetRotation.y - model.rotation.y) * rotationEase;
-      model.rotation.z += (targetRotation.z - model.rotation.z) * rotationEase;
+      // Mouse movement
+      document.addEventListener('mousemove', onDocumentMouseMove, false);
+      window.addEventListener('resize', onWindowResize, false);
     }
 
-    renderer.render(scene, camera);
-  }
-  animate();
+    function onDocumentMouseMove(event) {
+      const mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+      const mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
 
-  // Resize handling
-  window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth/window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  });
+      targetRotationY = THREE.MathUtils.clamp(mouseX * rotationLimit, -rotationLimit, rotationLimit);
+      targetRotationX = THREE.MathUtils.clamp(mouseY * rotationLimit, -rotationLimit, rotationLimit);
+    }
 
-});
-</script>
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      if (model) {
+        // Ease rotation
+        currentRotationX += (targetRotationX - currentRotationX) * 0.05;
+        currentRotationY += (targetRotationY - currentRotationY) * 0.05;
+
+        model.rotation.x = currentRotationX;
+        model.rotation.y = currentRotationY;
+      }
+
+      renderer.render(scene, camera);
+    }
+  </script>
 </body>
 </html>
