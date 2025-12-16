@@ -7,9 +7,9 @@
     body { margin: 0; overflow: hidden; }
     canvas { display: block; }
   </style>
-  <!-- Three.js classic script -->
-  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
-  <script src="https://unpkg.com/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
+  <!-- Three.js r149 -->
+  <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r149/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r149/examples/js/loaders/GLTFLoader.js"></script>
 </head>
 <body>
 <script>
@@ -35,14 +35,14 @@
   directionalLight.position.set(5, 10, 7.5);
   scene.add(directionalLight);
 
-  // Load GLB model
+  // Load GLB model from raw.githack.com (replace with your repo path)
   let model;
   const loader = new THREE.GLTFLoader();
   loader.load(
-    'https://rawcdn.githack.com/CoopRCubed/CR-Logo-3D/main/CPR.glb', // GitHub Pages URL
+    'https://rawcdn.githack.com/CoopRCubed/CR-Logo-3D/main/CPR.glb', // guaranteed CORS-friendly
     function(gltf){
       model = gltf.scene;
-      model.scale.set(2, 2, 2);
+      model.scale.set(2,2,2);
       scene.add(model);
     },
     undefined,
